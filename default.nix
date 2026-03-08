@@ -1,31 +1,35 @@
 let
-	nixpkgs = builtins.getFlake "github:nixos/nixpkgs/release-25.11";
-	pkgs = import nixpkgs {};
-	inherit (pkgs) mkShell buildEnv;
+  nixpkgs = builtins.getFlake "github:nixos/nixpkgs/release-25.11";
+  rustOverlay = import (builtins.getFlake "github:oxalica/rust-overlay").outPath;
 
-	shell = mkShell {
-		packages = with pkgs; [
-			jdk21_headless
-			sdkmanager
-		];
+  pkgs = import nixpkgs {
+    overlays = [ rustOverlay ];
+    config = {
+      allowUnfree = true;
+      android_sdk.accept_license = true;
+    };
+  };
 
-		shellHook = ''
-			mkdir -p .adh
-			export ANDROID_HOME="$PWD/.adh"
-			export ANDROID_SDK_ROOT="$PWD/.adh"
-			export ANDROID_NDK_HOME="${env}/libexec/android-sdk/ndk/29.0.14206865"
-	  '';
+  rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+    targets = [ "aarch64-linux-android" ];
+  };
 
-	};
-	
-	env = buildEnv {
-		name = "env";
-		paths = with pkgs; [
-			androidenv.androidPkgs.platform-tools
-			androidenv.androidPkgs.androidsdk
-			androidenv.androidPkgs.build-tools
-			androidenv.androidPkgs.ndk-bundle
-		];
-	};
+  naerskLib = pkgs.callPackage (builtins.getFlake "github:nix-community/naersk").outPath {
+    cargo = rustToolchain;
+    rustc = rustToolchain;
+  };
+
+  app = pkgs.callPackage ./nix/android-transcribe-app.nix {
+    inherit naerskLib rustToolchain;
+  };
 in
-{ inherit env shell; }
+{
+  inherit (app)
+    apk
+    rustLib
+    modelAssets
+    gradleDeps
+    gradleDepsUpdateScript
+    shell
+    ;
+}
