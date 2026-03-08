@@ -286,12 +286,11 @@ public class RustInputMethodService extends InputMethodService {
 
     private void updateUiState() {
         boolean isWaiting = lastStatus.contains("Waiting");
-        boolean isTranscribing = lastStatus.contains("Transcribing") || lastStatus.contains("Processing");
-        boolean isError = lastStatus.startsWith("Error");
 
-        // Disable record button during transcription/processing/waiting or fatal errors
+        // Keep record button available while previous clips are transcribing.
+        // Only disable during model-loading "Waiting..." states.
         if (recordButton != null) {
-            boolean disable = isTranscribing || isWaiting || isError;
+            boolean disable = isWaiting;
             recordButton.setEnabled(!disable);
             recordButton.setAlpha(disable ? 0.5f : 1.0f);
         }
