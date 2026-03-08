@@ -10,6 +10,8 @@
   sdkmanager,
   androidenv,
   unzip,
+  cargoNdk,
+  curl,
   naerskLib,
   rustToolchain,
 }:
@@ -229,14 +231,29 @@ in
   shell = mkShell {
     packages = [
       rustToolchain
+      cargoNdk
+      jdk21_headless
+      gradle
+      curl
       sdkmanager
       androidSdk
     ];
 
     shellHook = ''
+      export JAVA_HOME="${jdk21_headless}"
       export ANDROID_HOME="${androidHome}"
       export ANDROID_SDK_ROOT="$ANDROID_HOME"
       export ANDROID_NDK_HOME="${androidNdk}"
+      export ANDROID_NDK="$ANDROID_NDK_HOME"
+      export GRADLE_OPTS="-Dorg.gradle.java.home=$JAVA_HOME ''${GRADLE_OPTS-}"
+
+      if [ ! -f local.properties ]; then
+        cat > local.properties <<EOF
+sdk.dir=$ANDROID_HOME
+EOF
+      fi
+
+      mkdir -p "$HOME/.android"
     '';
   };
 }

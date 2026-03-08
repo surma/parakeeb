@@ -21,6 +21,7 @@ let
 
   app = pkgs.callPackage ./nix/android-transcribe-app.nix {
     inherit naerskLib rustToolchain;
+    cargoNdk = pkgs.cargo-ndk;
   };
 in
 {
