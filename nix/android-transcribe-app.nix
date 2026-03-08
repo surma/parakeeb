@@ -74,12 +74,12 @@ let
       packDir="$out/model_pack/${modelDir}"
 
       mkdir -p "$appDir" "$packDir"
-      cp ${configJson} "$appDir/config.json"
-      cp ${vocabTxt} "$appDir/vocab.txt"
+      ln -s ${configJson} "$appDir/config.json"
+      ln -s ${vocabTxt} "$appDir/vocab.txt"
 
-      cp ${encoder} "$packDir/encoder-model.int8.onnx"
-      cp ${decoder} "$packDir/decoder_joint-model.int8.onnx"
-      cp ${nemo} "$packDir/nemo128.onnx"
+      ln -s ${encoder} "$packDir/encoder-model.int8.onnx"
+      ln -s ${decoder} "$packDir/decoder_joint-model.int8.onnx"
+      ln -s ${nemo} "$packDir/nemo128.onnx"
     '';
 
   rustLib = naerskLib.buildPackage {
@@ -183,17 +183,17 @@ let
             modelDir="parakeet-tdt-0.6b-v3-int8"
 
             mkdir -p "app/src/main/jniLibs/arm64-v8a"
-            cp ${rustLib}/lib/arm64-v8a/libandroid_transcribe_app.so "app/src/main/jniLibs/arm64-v8a/"
-            cp ${rustLib}/lib/arm64-v8a/libc++_shared.so "app/src/main/jniLibs/arm64-v8a/"
+            ln -sf ${rustLib}/lib/arm64-v8a/libandroid_transcribe_app.so "app/src/main/jniLibs/arm64-v8a/libandroid_transcribe_app.so"
+            ln -sf ${rustLib}/lib/arm64-v8a/libc++_shared.so "app/src/main/jniLibs/arm64-v8a/libc++_shared.so"
 
             mkdir -p "app/src/main/assets/$modelDir"
-            cp ${modelAssets}/app/$modelDir/config.json "app/src/main/assets/$modelDir/"
-            cp ${modelAssets}/app/$modelDir/vocab.txt "app/src/main/assets/$modelDir/"
+            ln -sf ${modelAssets}/app/$modelDir/config.json "app/src/main/assets/$modelDir/config.json"
+            ln -sf ${modelAssets}/app/$modelDir/vocab.txt "app/src/main/assets/$modelDir/vocab.txt"
 
             mkdir -p "model_assets/src/main/assets/$modelDir"
-            cp ${modelAssets}/model_pack/$modelDir/encoder-model.int8.onnx "model_assets/src/main/assets/$modelDir/"
-            cp ${modelAssets}/model_pack/$modelDir/decoder_joint-model.int8.onnx "model_assets/src/main/assets/$modelDir/"
-            cp ${modelAssets}/model_pack/$modelDir/nemo128.onnx "model_assets/src/main/assets/$modelDir/"
+            ln -sf ${modelAssets}/model_pack/$modelDir/encoder-model.int8.onnx "model_assets/src/main/assets/$modelDir/encoder-model.int8.onnx"
+            ln -sf ${modelAssets}/model_pack/$modelDir/decoder_joint-model.int8.onnx "model_assets/src/main/assets/$modelDir/decoder_joint-model.int8.onnx"
+            ln -sf ${modelAssets}/model_pack/$modelDir/nemo128.onnx "model_assets/src/main/assets/$modelDir/nemo128.onnx"
           '';
 
           installPhase = ''
