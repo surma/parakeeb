@@ -239,6 +239,121 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- LLM Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:elevation="4dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/section_llm"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/textPrimary"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/llm_helper_text"
+                android:textColor="@color/textSecondary"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/llm_base_url"
+                android:textColor="@color/textPrimary"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/input_llm_base_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/llm_base_url_hint"
+                android:inputType="textUri"
+                android:importantForAutofill="no"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/llm_model"
+                android:textColor="@color/textPrimary"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/input_llm_model"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/llm_model_hint"
+                android:inputType="text"
+                android:importantForAutofill="no"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/llm_api_key"
+                android:textColor="@color/textPrimary"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/input_llm_api_key"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/llm_api_key_hint"
+                android:inputType="textPassword"
+                android:importantForAutofill="no"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/llm_instructions"
+                android:textColor="@color/textPrimary"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/input_llm_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/llm_instructions_hint"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="3"
+                android:importantForAutofill="no"
+                android:layout_marginBottom="16dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_llm_save"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/btn_llm_save"
+                    style="@style/ButtonStyle"
+                    android:layout_marginEnd="8dp"/>
+
+                <Button
+                    android:id="@+id/btn_llm_test"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/btn_llm_test"
+                    style="@style/ButtonStyle"/>
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Subtitles Card -->
         <LinearLayout
             android:layout_width="match_parent"

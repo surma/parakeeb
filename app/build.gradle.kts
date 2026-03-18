@@ -125,9 +125,13 @@ val generateFallbackReleaseKeystore by tasks.registering {
 
 dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.22.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
 
 // Dedicated configuration to resolve the ORT AAR for the Rust build

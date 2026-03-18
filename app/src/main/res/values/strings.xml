@@ -30,4 +30,30 @@
 
     <string name="setting_pause_audio">Pause audio</string>
     <string name="setting_pause_audio_desc">Pause audio while recording</string>
+
+    <string name="section_llm">LLM Rewrite</string>
+    <string name="llm_base_url">Base URL</string>
+    <string name="llm_base_url_hint">https://api.openai.com</string>
+    <string name="llm_model">Model</string>
+    <string name="llm_model_hint">gpt-4.1-mini</string>
+    <string name="llm_api_key">API key</string>
+    <string name="llm_api_key_hint">sk-…</string>
+    <string name="llm_instructions">Additional instructions</string>
+    <string name="llm_instructions_hint">E.g. remove filler words, keep tone casual</string>
+    <string name="llm_helper_text">The app uses a built-in dictation cleanup prompt. Add extra instructions here to customize the rewrite.</string>
+    <string name="btn_llm_save">Save LLM Settings</string>
+    <string name="btn_llm_test">Test Connection</string>
+    <string name="btn_llm_testing">Testing…</string>
+    <string name="toast_llm_settings_saved">LLM settings saved</string>
+    <string name="toast_llm_settings_error">Could not save LLM settings</string>
+    <string name="toast_llm_test_success">LLM connection works</string>
+    <string name="toast_llm_test_failure">LLM connection failed</string>
+    <string name="toast_llm_test_canceled">LLM connection test canceled</string>
+
+    <string name="ime_rewrite">Rewrite</string>
+    <string name="ime_rewrite_cancel">Cancel rewrite</string>
+    <string name="toast_rewrite_missing_target">Nothing to rewrite</string>
+    <string name="toast_rewrite_failed">Rewrite failed</string>
+    <string name="toast_rewrite_canceled">Rewrite canceled</string>
+    <string name="toast_rewrite_missing_text">Selected text is empty</string>
 </resources>
