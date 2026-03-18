@@ -77,9 +77,6 @@
   "dl/android/maven2/com/android/tools/build#aapt2/8.7.3-12006047": {
    "pom": "sha256-qOlhnTjlOiqyiEisWiD6rA7XUdIkqKJSNmTsmYfxPw8="
   },
-  "dl/android/maven2/com/android/tools/build#aapt2/8.7.3-12006047/osx": {
-   "jar": "sha256-jPyo0/y4rUXPRuN4DN1KZMs4xwykW0QmVd6fPn0Z78E="
-  },
   "dl/android/maven2/com/android/tools/build#aaptcompiler/8.7.3": {
    "jar": "sha256-RwYuueVJfgdClGUo/ZPDiGdz3SM5BZMV9jFtXAXXza8=",
    "module": "sha256-Pfe+D8ZksWVlQoGEyMu0DI8iMiojO0qCINu9bTmTU68=",
@@ -233,9 +230,6 @@
   "dl/android/maven2/com/google/testing/platform#core-proto/0.0.9-alpha02": {
    "jar": "sha256-bYqJBndBUPQ6j60IymTiXGBww5vYpvwTslk/KJJC/pU=",
    "pom": "sha256-J855WUJ6L/7kjQ/rRRKKPzbMQX7YqCKvoigiyPWliyU="
-  },
-  "play-sdk/index/snapshot": {
-   "gz": "sha256-YrH9hPDE13VR5OlizFjUOg9u7NHmok6HYoF12jWMI04="
   }
  },
  "https://repo.maven.apache.org/maven2": {

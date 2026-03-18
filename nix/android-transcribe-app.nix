@@ -36,6 +36,9 @@ let
   androidSdk = androidComposition.androidsdk;
   androidHome = "${androidSdk}/libexec/android-sdk";
   androidNdk = "${androidHome}/ndk/${ndkVersion}";
+  # Use the Nix-packaged AAPT2 binary instead of the Maven-hosted classifier
+  # jars; the latter are host-specific and not runnable inside the Nix sandbox.
+  aapt2Binary = "${androidHome}/build-tools/35.0.0/aapt2";
 
   onnxruntimeAar = fetchurl {
     url = "https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/1.22.0/onnxruntime-android-1.22.0.aar";
@@ -162,6 +165,7 @@ let
             "-x"
             "cargoNdkBuild"
             "-Dorg.gradle.java.home=${jdk21_headless}"
+            "-Pandroid.aapt2FromMavenOverride=${aapt2Binary}"
           ];
 
           preBuild = ''
@@ -225,7 +229,13 @@ let
 
     deps_file="nix/gradle-deps.json"
     tmp_file="$(mktemp)"
-    ${jq}/bin/jq 'del(.["https://maven.google.com"])' "$deps_file" > "$tmp_file"
+    # AGP records a mutable Google Play SDK Index snapshot during dependency
+    # resolution. It is not required for the build because lint ships an
+    # embedded offline snapshot fallback.
+    ${jq}/bin/jq '
+      del(.["https://maven.google.com"])
+      | del(.["https://dl.google.com"]["play-sdk/index/snapshot"])
+    ' "$deps_file" > "$tmp_file"
     mv "$tmp_file" "$deps_file"
   '';
 in
