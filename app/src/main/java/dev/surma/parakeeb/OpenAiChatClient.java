@@ -60,7 +60,6 @@ final class OpenAiChatClient {
         try {
             JsonObject payload = new JsonObject();
             payload.addProperty("model", settings.model);
-            payload.addProperty("temperature", TEMPERATURE);
 
             JsonArray messages = new JsonArray();
             messages.add(message("system", systemPrompt));
