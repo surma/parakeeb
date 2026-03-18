@@ -24,7 +24,7 @@ pub struct VoiceSessionConfig {
 impl VoiceSessionConfig {
     pub fn ime_default() -> Self {
         Self {
-            stream_results: true,
+            stream_results: false,
             stream_chunk_samples: 4 * 16_000,
         }
     }
@@ -401,6 +401,11 @@ mod tests {
     use super::{
         completion_status, enqueue_status, split_streaming_ranges, streaming_progress_status,
     };
+
+    #[test]
+    fn ime_default_disables_streaming_results() {
+        assert!(!super::VoiceSessionConfig::ime_default().stream_results);
+    }
 
     #[test]
     fn enqueue_status_reports_transcribing_for_first_job() {
