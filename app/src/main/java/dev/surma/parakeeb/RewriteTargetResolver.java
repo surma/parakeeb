@@ -13,6 +13,21 @@ final class RewriteTargetResolver {
         return new RewriteTarget(RewriteTarget.Kind.CURRENT_SELECTION, selectedText.toString());
     }
 
+    static RewriteTarget fromExtractedText(ExtractedText extractedText) {
+        if (extractedText == null || extractedText.text == null || extractedText.text.length() == 0) {
+            return null;
+        }
+        return new RewriteTarget(RewriteTarget.Kind.CURRENT_FIELD, extractedText.text.toString());
+    }
+
+    static int[] fullFieldRange(ExtractedText extractedText) {
+        if (extractedText == null || extractedText.text == null || extractedText.text.length() == 0) {
+            return null;
+        }
+        int start = extractedText.startOffset;
+        return new int[]{start, start + extractedText.text.length()};
+    }
+
     static int findNearestBackwardMatch(String fullText, int cursor, String needle) {
         if (fullText == null || needle == null || needle.isEmpty()) {
             return -1;

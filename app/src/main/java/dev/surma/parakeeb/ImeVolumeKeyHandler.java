@@ -7,14 +7,38 @@ final class ImeVolumeKeyHandler {
     }
 
     static boolean shouldConsumeKeyDown(boolean imeShown, int keyCode) {
+        return imeShown && isHandledHardwareKey(keyCode);
+    }
+
+    static boolean shouldTrackVolumeDownOnKeyDown(boolean imeShown, int keyCode, int repeatCount) {
+        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && repeatCount == 0;
+    }
+
+    static boolean shouldTrackVolumeUpOnKeyDown(boolean imeShown, int keyCode, int repeatCount) {
+        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_UP && repeatCount == 0;
+    }
+
+    static boolean shouldTriggerSendOnLongPress(boolean imeShown, int keyCode) {
         return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_DOWN;
     }
 
-    static boolean shouldToggleRecordingOnKeyDown(boolean imeShown, int keyCode, int repeatCount) {
-        return shouldConsumeKeyDown(imeShown, keyCode) && repeatCount == 0;
+    static boolean shouldTriggerUndoOnLongPress(boolean imeShown, int keyCode) {
+        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_UP;
+    }
+
+    static boolean shouldToggleRecordingOnKeyUp(boolean imeShown, int keyCode, boolean longPressHandled) {
+        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && !longPressHandled;
+    }
+
+    static boolean shouldTriggerRewriteOnKeyUp(boolean imeShown, int keyCode, boolean longPressHandled) {
+        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_UP && !longPressHandled;
     }
 
     static boolean shouldConsumeKeyUp(boolean imeShown, int keyCode) {
-        return imeShown && keyCode == KeyEvent.KEYCODE_VOLUME_DOWN;
+        return imeShown && isHandledHardwareKey(keyCode);
+    }
+
+    private static boolean isHandledHardwareKey(int keyCode) {
+        return keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP;
     }
 }

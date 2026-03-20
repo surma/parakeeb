@@ -65,6 +65,8 @@ public class RustInputMethodService extends InputMethodService {
     private Call inFlightRewriteCall;
     private RewriteTarget inFlightRewriteTarget;
     private boolean rewriteCancelRequested = false;
+    private boolean volumeDownLongPressTriggered = false;
+    private boolean volumeUpLongPressTriggered = false;
     private String lastCommittedTranscription = "";
 
     @Override
@@ -190,28 +192,7 @@ public class RustInputMethodService extends InputMethodService {
                 }
             });
 
-            enterButton.setOnClickListener(v -> {
-                InputConnection ic = getCurrentInputConnection();
-                if (ic == null) {
-                    return;
-                }
-
-                EditorInfo editorInfo = getCurrentInputEditorInfo();
-                int imeOptions = editorInfo.imeOptions;
-                int action = imeOptions & EditorInfo.IME_MASK_ACTION;
-                boolean noEnterAction = (imeOptions & EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0;
-
-                if (!noEnterAction && (
-                        action == EditorInfo.IME_ACTION_GO ||
-                        action == EditorInfo.IME_ACTION_SEARCH ||
-                        action == EditorInfo.IME_ACTION_SEND ||
-                        action == EditorInfo.IME_ACTION_NEXT)) {
-                    ic.performEditorAction(action);
-                } else {
-                    ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-                    ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
-                }
-            });
+            enterButton.setOnClickListener(v -> performImeEnterAction());
 
             recordButton.setOnClickListener(v -> toggleRecordingFromImeTrigger());
 
@@ -266,14 +247,26 @@ public class RustInputMethodService extends InputMethodService {
             audioPauser.abandon(this);
             pauseAudioActive = false;
         }
+        volumeDownLongPressTriggered = false;
+        volumeUpLongPressTriggered = false;
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         boolean imeShown = isInputViewShown();
         int repeatCount = event == null ? 0 : event.getRepeatCount();
-        if (ImeVolumeKeyHandler.shouldToggleRecordingOnKeyDown(imeShown, keyCode, repeatCount)) {
-            toggleRecordingFromImeTrigger();
+        if (ImeVolumeKeyHandler.shouldTrackVolumeDownOnKeyDown(imeShown, keyCode, repeatCount)) {
+            volumeDownLongPressTriggered = false;
+            if (event != null) {
+                event.startTracking();
+            }
+            return true;
+        }
+        if (ImeVolumeKeyHandler.shouldTrackVolumeUpOnKeyDown(imeShown, keyCode, repeatCount)) {
+            volumeUpLongPressTriggered = false;
+            if (event != null) {
+                event.startTracking();
+            }
             return true;
         }
         if (ImeVolumeKeyHandler.shouldConsumeKeyDown(imeShown, keyCode)) {
@@ -283,8 +276,41 @@ public class RustInputMethodService extends InputMethodService {
     }
 
     @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        if (ImeVolumeKeyHandler.shouldTriggerSendOnLongPress(isInputViewShown(), keyCode)) {
+            volumeDownLongPressTriggered = true;
+            if (!isRecording) {
+                performImeEnterAction();
+            }
+            return true;
+        }
+        if (ImeVolumeKeyHandler.shouldTriggerUndoOnLongPress(isInputViewShown(), keyCode)) {
+            volumeUpLongPressTriggered = true;
+            undoLastDictation();
+            return true;
+        }
+        return super.onKeyLongPress(keyCode, event);
+    }
+
+    @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (ImeVolumeKeyHandler.shouldConsumeKeyUp(isInputViewShown(), keyCode)) {
+        boolean imeShown = isInputViewShown();
+        if (ImeVolumeKeyHandler.shouldToggleRecordingOnKeyUp(imeShown, keyCode, volumeDownLongPressTriggered)) {
+            volumeDownLongPressTriggered = false;
+            toggleRecordingFromImeTrigger();
+            return true;
+        }
+        if (ImeVolumeKeyHandler.shouldTriggerRewriteOnKeyUp(imeShown, keyCode, volumeUpLongPressTriggered)) {
+            volumeUpLongPressTriggered = false;
+            startOrCancelRewrite();
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            volumeDownLongPressTriggered = false;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            volumeUpLongPressTriggered = false;
+        }
+        if (ImeVolumeKeyHandler.shouldConsumeKeyUp(imeShown, keyCode)) {
             return true;
         }
         return super.onKeyUp(keyCode, event);
@@ -405,6 +431,41 @@ public class RustInputMethodService extends InputMethodService {
         }
     }
 
+    private void performImeEnterAction() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) {
+            return;
+        }
+
+        EditorInfo editorInfo = getCurrentInputEditorInfo();
+        int imeOptions = editorInfo == null ? 0 : editorInfo.imeOptions;
+        int action = imeOptions & EditorInfo.IME_MASK_ACTION;
+        boolean noEnterAction = (imeOptions & EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0;
+
+        if (!noEnterAction && (
+                action == EditorInfo.IME_ACTION_GO ||
+                action == EditorInfo.IME_ACTION_SEARCH ||
+                action == EditorInfo.IME_ACTION_SEND ||
+                action == EditorInfo.IME_ACTION_NEXT)) {
+            ic.performEditorAction(action);
+        } else {
+            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+            ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+        }
+    }
+
+    private void undoLastDictation() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) {
+            return;
+        }
+
+        ExtractedText extractedText = ic.getExtractedText(new ExtractedTextRequest(), 0);
+        if (LastDictationUndoEditor.undo(ic, extractedText, lastCommittedTranscription)) {
+            lastCommittedTranscription = "";
+        }
+    }
+
     private void startOrCancelRewrite() {
         if (inFlightRewriteCall != null) {
             cancelRewrite(true);
@@ -464,16 +525,8 @@ public class RustInputMethodService extends InputMethodService {
             return selectionTarget;
         }
 
-        if (lastCommittedTranscription.isEmpty()) {
-            return null;
-        }
-
         ExtractedText extractedText = ic.getExtractedText(new ExtractedTextRequest(), 0);
-        int[] range = RewriteTargetResolver.findReplacementRange(extractedText, lastCommittedTranscription);
-        if (range == null) {
-            return null;
-        }
-        return new RewriteTarget(RewriteTarget.Kind.LAST_DICTATION, lastCommittedTranscription);
+        return RewriteTargetResolver.fromExtractedText(extractedText);
     }
 
     private void cancelRewrite(boolean userInitiated) {
@@ -528,14 +581,17 @@ public class RustInputMethodService extends InputMethodService {
 
         String replacement = target.parts.reassemble(rewrittenCore);
         CharSequence selectedText = ic.getSelectedText(0);
-        if (selectedText != null && target.rawText.contentEquals(selectedText)) {
+        if (target.kind == RewriteTarget.Kind.CURRENT_SELECTION
+                && selectedText != null
+                && target.rawText.contentEquals(selectedText)) {
             ic.commitText(replacement, 1);
-            lastCommittedTranscription = replacement;
             return true;
         }
 
         ExtractedText extractedText = ic.getExtractedText(new ExtractedTextRequest(), 0);
-        int[] range = RewriteTargetResolver.findReplacementRange(extractedText, target.rawText);
+        int[] range = target.kind == RewriteTarget.Kind.CURRENT_FIELD
+                ? RewriteTargetResolver.fullFieldRange(extractedText)
+                : RewriteTargetResolver.findReplacementRange(extractedText, target.rawText);
         if (range == null) {
             return false;
         }
@@ -547,7 +603,6 @@ public class RustInputMethodService extends InputMethodService {
         } finally {
             ic.endBatchEdit();
         }
-        lastCommittedTranscription = replacement;
         return true;
     }
 
@@ -560,8 +615,8 @@ public class RustInputMethodService extends InputMethodService {
     }
 
     private void clearRewriteMemory() {
-        lastCommittedTranscription = "";
         inFlightRewriteTarget = null;
+        lastCommittedTranscription = "";
     }
 
     @Override

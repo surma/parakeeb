@@ -3,7 +3,7 @@ package dev.surma.parakeeb;
 final class RewriteTarget {
     enum Kind {
         CURRENT_SELECTION,
-        LAST_DICTATION
+        CURRENT_FIELD
     }
 
     final Kind kind;
