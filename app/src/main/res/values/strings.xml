@@ -78,4 +78,7 @@
     <string name="editor_reset">Reset to default</string>
     <string name="editor_cancel">Cancel</string>
     <string name="editor_save">Save</string>
+    <string name="cancel_recording">Cancel recording</string>
+    <string name="history_transcribing">Transcribing…</string>
+    <string name="history_transcription_failed">Transcription failed</string>
 </resources>

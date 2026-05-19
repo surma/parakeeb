@@ -79,6 +79,20 @@
                     android:indeterminate="true"
                     android:visibility="gone" />
             </FrameLayout>
+
+            <ImageView
+                android:id="@+id/ime_cancel_record"
+                android:layout_width="32dp"
+                android:layout_height="match_parent"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:scaleType="centerInside"
+                android:tint="@color/ime_text_hint"
+                android:background="@drawable/bg_backspace"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginStart="4dp"
+                android:visibility="gone"
+                android:contentDescription="@string/cancel_recording" />
         </LinearLayout>
 
         <ImageView
