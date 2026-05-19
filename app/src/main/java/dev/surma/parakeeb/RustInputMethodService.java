@@ -53,6 +53,7 @@ public class RustInputMethodService extends InputMethodService {
     private View recordButton;
     private ImageView recordIcon;
     private ProgressBar recordProgress;
+    private View cancelRecordButton;
     private View backspaceButton;
     private View spaceButton;
     private View enterButton;
@@ -106,6 +107,7 @@ public class RustInputMethodService extends InputMethodService {
     private Runnable pendingVolumeUpRewriteRunnable;
     private boolean awaitingTranscriptionResult = false;
     private boolean pendingSendAfterTranscription = false;
+    private long pendingTombstoneId = -1;
 
     @Override
     public void onCreate() {
@@ -152,6 +154,10 @@ public class RustInputMethodService extends InputMethodService {
             recordButton = view.findViewById(R.id.ime_record);
             recordIcon = view.findViewById(R.id.ime_record_icon);
             recordProgress = view.findViewById(R.id.ime_record_progress);
+            cancelRecordButton = view.findViewById(R.id.ime_cancel_record);
+            if (cancelRecordButton != null) {
+                cancelRecordButton.setOnClickListener(v -> doCancelRecording());
+            }
             backspaceButton = view.findViewById(R.id.ime_backspace);
             spaceButton = view.findViewById(R.id.ime_space);
             enterButton = view.findViewById(R.id.ime_enter);
@@ -222,7 +228,7 @@ public class RustInputMethodService extends InputMethodService {
 
             historyList.setOnItemClickListener((parent, v, position, id) -> {
                 TranscriptEntry entry = historyAdapter.getItem(position);
-                if (entry == null) return;
+                if (entry == null || entry.text == null || entry.text.isEmpty()) return;
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) {
                     String committed = entry.text + " ";
@@ -346,17 +352,12 @@ public class RustInputMethodService extends InputMethodService {
         collapsePanel();
         clearInputSessionState();
         if (isRecording) {
+            // Save the recording rather than discarding it.
             try {
-                cancelRecording();
+                stopActiveRecording();
             } catch (Throwable t) {
-                Log.w(TAG, "cancelRecording failed, falling back to stopRecording", t);
-                try {
-                    stopRecording();
-                } catch (Throwable ignored) {
-                }
+                Log.w(TAG, "stopRecording on hide failed", t);
             }
-            isTranscribing = false;
-            updateRecordButtonUI(false);
         }
         if (pauseAudioActive) {
             audioPauser.abandon(this);
@@ -509,6 +510,13 @@ public class RustInputMethodService extends InputMethodService {
             audioPauser.abandon(this);
             pauseAudioActive = false;
         }
+        // Insert tombstone so history shows "Transcribing..." immediately.
+        if (historyStore != null) {
+            pendingTombstoneId = historyStore.insertTombstone();
+            if (panelExpanded) {
+                refreshHistoryList();
+            }
+        }
         updateRecordButtonUI(false);
     }
 
@@ -628,6 +636,24 @@ public class RustInputMethodService extends InputMethodService {
         SelectionEditor.selectAll(ic, extractedText);
     }
 
+    private void doCancelRecording() {
+        if (!isRecording) return;
+        try {
+            cancelRecording();
+        } catch (Throwable t) {
+            Log.w(TAG, "cancelRecording failed", t);
+        }
+        isRecording = false;
+        isTranscribing = false;
+        awaitingTranscriptionResult = false;
+        pendingSendAfterTranscription = false;
+        if (pauseAudioActive) {
+            audioPauser.abandon(this);
+            pauseAudioActive = false;
+        }
+        updateRecordButtonUI(false);
+    }
+
     private void updateRecordButtonUI(boolean recording) {
         isRecording = recording;
         if (recordButton == null) {
@@ -647,6 +673,10 @@ public class RustInputMethodService extends InputMethodService {
 
         if (recordProgress != null) {
             recordProgress.setVisibility(showSpinner ? View.VISIBLE : View.GONE);
+        }
+
+        if (cancelRecordButton != null) {
+            cancelRecordButton.setVisibility(recording ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1130,6 +1160,15 @@ public class RustInputMethodService extends InputMethodService {
             if (status == null || status.startsWith("Canceled") || status.startsWith("Error")) {
                 awaitingTranscriptionResult = false;
                 pendingSendAfterTranscription = false;
+                // Mark tombstone as failed if transcription errored out.
+                if (status != null && status.startsWith("Error") && pendingTombstoneId >= 0
+                        && historyStore != null) {
+                    historyStore.updateStatus(pendingTombstoneId, TranscriptEntry.STATUS_ERROR);
+                    pendingTombstoneId = -1;
+                    if (panelExpanded) {
+                        refreshHistoryList();
+                    }
+                }
             }
 
             updateUiState();
@@ -1155,13 +1194,24 @@ public class RustInputMethodService extends InputMethodService {
 
     public void onTextTranscribed(String text) {
         mainHandler.post(() -> {
-            // Always save raw transcript to history first.
+            // Update the tombstone entry with the transcribed text, or insert fresh.
             if (historyStore != null && text != null && !text.isEmpty()) {
-                historyStore.insert(text);
+                if (pendingTombstoneId >= 0) {
+                    historyStore.updateWithText(pendingTombstoneId, text);
+                } else {
+                    historyStore.insert(text);
+                }
+                if (panelExpanded) {
+                    refreshHistoryList();
+                }
+            } else if (historyStore != null && pendingTombstoneId >= 0) {
+                // Transcription returned empty — mark tombstone as error.
+                historyStore.updateStatus(pendingTombstoneId, TranscriptEntry.STATUS_ERROR);
                 if (panelExpanded) {
                     refreshHistoryList();
                 }
             }
+            pendingTombstoneId = -1;
 
             awaitingTranscriptionResult = false;
             isTranscribing = false;
