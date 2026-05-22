@@ -34,7 +34,7 @@ public class SoftKeyboardView extends LinearLayout {
 
     private static final long DELETE_REPEAT_INITIAL_DELAY = 400;
     private static final long DELETE_REPEAT_INTERVAL = 50;
-    private static final int KEY_HEIGHT_DP = 46;
+    private static final int KEY_HEIGHT_DP = 42;
 
     private boolean isSymbolsMode = false;
     private boolean isShifted = false;
