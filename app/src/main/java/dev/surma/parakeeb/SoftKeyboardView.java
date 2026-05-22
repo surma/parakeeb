@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.text.Editable;
 import android.util.AttributeSet;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,6 +34,7 @@ public class SoftKeyboardView extends LinearLayout {
 
     private static final long DELETE_REPEAT_INITIAL_DELAY = 400;
     private static final long DELETE_REPEAT_INTERVAL = 50;
+    private static final int KEY_HEIGHT_DP = 42;
 
     private boolean isSymbolsMode = false;
     private boolean isShifted = false;
@@ -211,15 +213,15 @@ public class SoftKeyboardView extends LinearLayout {
         keyRowsContainer.addView(
                 buildCharRow(context, r1, 1f, 0f), rowLp(0));
 
-        // Row 2: @ # $ % & - + ( )  (spacer(0.5) + 9×1 + spacer(0.5) = 10.0)
-        String[] r2 = {"@","#","$","%","&","-","+","(",")"};
+        // Row 2: @ # $ % & - + ( ) /  (10 × 1.0 = 10.0)
+        String[] r2 = {"@","#","$","%","&","-","+","(",")","/"};
         keyRowsContainer.addView(
-                buildCharRow(context, r2, 1f, 0.5f), rowLp(2));
+                buildCharRow(context, r2, 1f, 0f), rowLp(2));
 
-        // Row 3: = * " ' : ; ! ?  (spacer(1) + 8×1 + spacer(1) = 10.0)
-        String[] r3 = {"=","*","\"","'",":",";","!","?"};
+        // Row 3: = * \ " ' : ; ! ?  (spacer(0.5) + 9×1 + spacer(0.5) = 10.0)
+        String[] r3 = {"=","*","\\","\"","'",":",";","!","?"};
         keyRowsContainer.addView(
-                buildCharRow(context, r3, 1f, 1f), rowLp(2));
+                buildCharRow(context, r3, 1f, 0.5f), rowLp(2));
 
         // Row 4: ABC(1.5) ,(1) SPACE(5) .(1) ⏎(1.5) = 10.0
         keyRowsContainer.addView(buildBottomRow(context, "ABC"), rowLp(2));
@@ -306,7 +308,12 @@ public class SoftKeyboardView extends LinearLayout {
     // Key actions
     // -----------------------------------------------------------------------
 
+    private void hapticTap() {
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+    }
+
     private void onCharKey(char ch) {
+        hapticTap();
         if (directTarget != null) {
             char out = ch;
             if (isShifted && Character.isLetter(ch)) {
@@ -338,6 +345,7 @@ public class SoftKeyboardView extends LinearLayout {
     }
 
     private void onEnterKey() {
+        hapticTap();
         if (directTarget != null) {
             Editable editable = directTarget.getText();
             int start = directTarget.getSelectionStart();
@@ -352,11 +360,13 @@ public class SoftKeyboardView extends LinearLayout {
     }
 
     private void toggleShift() {
+        hapticTap();
         isShifted = !isShifted;
         updateShiftVisuals();
     }
 
     private void toggleMode() {
+        hapticTap();
         isSymbolsMode = !isSymbolsMode;
         isShifted = false;
         buildKeyRows(getContext());
@@ -408,6 +418,7 @@ public class SoftKeyboardView extends LinearLayout {
         delKey.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
+                    hapticTap();
                     performDelete();
                     handler.postDelayed(deleteRepeatRunnable, DELETE_REPEAT_INITIAL_DELAY);
                     return true;
@@ -428,6 +439,7 @@ public class SoftKeyboardView extends LinearLayout {
     private enum ModifierKind { CTRL, SHIFT, ALT, META }
 
     private void toggleModifier(ModifierKind kind) {
+        hapticTap();
         switch (kind) {
             case CTRL:  ctrlActive  = !ctrlActive;  break;
             case SHIFT: shiftActive = !shiftActive; break;
@@ -464,6 +476,7 @@ public class SoftKeyboardView extends LinearLayout {
 
     /** Send a single key immediately (for non-toggle keys like Esc, Tab, arrows). */
     private void sendImmediateKey(int keyCode) {
+        hapticTap();
         InputConnection ic = (icProvider != null) ? icProvider.getInputConnection() : null;
         if (ic != null) {
             sendKeyEvent(ic, keyCode);
@@ -514,14 +527,14 @@ public class SoftKeyboardView extends LinearLayout {
     private TextView makeKeyButton(Context context, String label, float weight) {
         TextView tv = new TextView(context);
         tv.setText(label);
-        tv.setTextSize(13);
+        tv.setTextSize(15);
         tv.setTextColor(getColor(R.color.ime_key_text));
         tv.setGravity(Gravity.CENTER);
         tv.setBackgroundResource(R.drawable.bg_key_normal);
         tv.setClickable(true);
         tv.setFocusable(true);
 
-        LayoutParams lp = new LayoutParams(0, dpToPx(36), weight);
+        LayoutParams lp = new LayoutParams(0, dpToPx(KEY_HEIGHT_DP), weight);
         lp.setMargins(dpToPx(2), 0, dpToPx(2), 0);
         tv.setLayoutParams(lp);
         return tv;
@@ -529,7 +542,7 @@ public class SoftKeyboardView extends LinearLayout {
 
     private View makeSpacer(Context context, float weight) {
         Space spacer = new Space(context);
-        LayoutParams lp = new LayoutParams(0, dpToPx(36), weight);
+        LayoutParams lp = new LayoutParams(0, dpToPx(KEY_HEIGHT_DP), weight);
         spacer.setLayoutParams(lp);
         return spacer;
     }
